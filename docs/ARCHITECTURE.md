@@ -30,6 +30,12 @@ chain (see [what the probe checks](#what-the-probe-checks-and-why-each-check-exi
 The factory's runtime bytecode embeds the creation code of the curve and the token, so one
 bytecode comparison against the factory covers all three.
 
+The `0.11.0` generation, which `$WOMBO` runs on, was built the same way from commit
+[`98ffb1c`](https://github.com/0xcuy/adexto/commit/98ffb1c900f4c9e14d035e279ef095e25ac8e4ba).
+Sourcify reports an exact match, creation and runtime, for both factories:
+[`0.12.0`](https://repo.sourcify.dev/42161/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC) and
+[`0.11.0`](https://repo.sourcify.dev/42161/0xE17f1027FC5f294327D701829baeD9d6519e922C).
+
 ## One launch, one transaction
 
 ```mermaid

@@ -8,6 +8,7 @@ else.
 [![Arbitrum One](https://img.shields.io/badge/Arbitrum_One-live-28A0F0)](https://arbiscan.io/address/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC)
 [![Factory](https://img.shields.io/badge/AdextoFactory-0.12.0-1f2937)](https://github.com/0xcuy/adexto/blob/1f1cbfc5ce97b417aa926e122e564738d4389e55/contracts/AdextoFactory.sol)
 [![Admin keys](https://img.shields.io/badge/admin_keys-none-16a34a)](docs/ARCHITECTURE.md#what-nobody-can-do-including-us)
+[![Sourcify](https://img.shields.io/badge/Sourcify-exact_match-16a34a)](https://repo.sourcify.dev/42161/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 This repository is the Arbitrum side of [ADEXTO](https://adexto.xyz). It holds the chain registry,
@@ -35,7 +36,7 @@ engineering notes. The contracts, their tests and the web app live in
 | --- | --- |
 | **AdextoFactory 0.12.0** (current) | [`0x75EeDEd196D2BE283d815D52F617eB70bCe865bC`](https://arbiscan.io/address/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC), deployed in block 509,845,969 ([tx](https://arbiscan.io/tx/0x9084a9ae5d7a765563ff2c935980053fa11a6ff87fc114bc8c3c9bb35cec35f5)) |
 | Runtime bytecode | 21,403 bytes, keccak `0xc0841d5a…174d8f0f`, byte-identical on 0G, Base and Monad |
-| Source | A `--via-ir` build of commit [`1f1cbfc`](https://github.com/0xcuy/adexto/commit/1f1cbfc5ce97b417aa926e122e564738d4389e55). The probe checks it: with the two treasury immutables zeroed, the code on chain hashes to `0x83adf272…3dac3f` |
+| Source | A `--via-ir` build of commit [`1f1cbfc`](https://github.com/0xcuy/adexto/commit/1f1cbfc5ce97b417aa926e122e564738d4389e55). **Exact match on [Sourcify](https://repo.sourcify.dev/42161/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC)**, creation and runtime code both. The probe checks the same build locally: with the two treasury immutables zeroed, the code on chain hashes to `0x83adf272…3dac3f` |
 | Launch cost | 3,255,560 gas, **0.000065 ETH** at 0.020 gwei (about $0.18). Simulated on 2026-09-30. The creator attaches no ETH |
 | Trading fee | **1.00%**, carved four ways: creator 0.70 · depth 0.10 · buyback-and-burn 0.10 · protocol 0.10 |
 | Admin surface | None. No owner, no proxy, no pause, no withdraw, no fee setter |
@@ -206,7 +207,8 @@ Reserved tickers live in storage, so the runtime bytecode stays byte-identical.
 | MCP server for agents | **Live.** The paying tool is key-gated and capped |
 | Creator earnings, claimed in one transaction per chain | **Live** at [adexto.xyz/creator](https://adexto.xyz/creator) |
 | Robinhood Chain | **Next.** Readiness checked, nothing deployed yet |
-| Source verification on Arbiscan and Sourcify | **Not yet.** Verified today by reproducible build, as the probe shows |
+| Source on Sourcify | **Exact match** for AdextoFactory [`0.12.0`](https://repo.sourcify.dev/42161/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC), AdextoFactory [`0.11.0`](https://repo.sourcify.dev/42161/0xE17f1027FC5f294327D701829baeD9d6519e922C) (built from commit [`98ffb1c`](https://github.com/0xcuy/adexto/commit/98ffb1c900f4c9e14d035e279ef095e25ac8e4ba)) and the [`$WOMBO` curve](https://repo.sourcify.dev/42161/0xB71A0bAfF60795DEde0C7f89F6AD095f7186C712) |
+| Source on Arbiscan | **In progress.** Submitted with the same standard-JSON input Sourcify matched exactly |
 | Third-party audit | **Not yet.** Scope written, 694 SLOC |
 
 ## Roadmap
@@ -216,8 +218,9 @@ Each milestone ends in something the chain or this repository can show.
 1. **Robinhood Chain mainnet.** Deploy AdextoFactory `0.12.0` byte-identical, with the tickers of
    tokenized equities reserved at construction. Done when `npm run probe:robinhood` lists the
    factory and passes.
-2. **Explorer-verified source.** Verify every Arbitrum One generation on Arbiscan and Sourcify, so
-   the source match does not depend on running the probe.
+2. **Explorer-verified source everywhere.** Sourcify already has exact matches for both factory
+   generations. Arbiscan and the `$WOMBO` token complete it, so reading the source never depends
+   on running the probe.
 3. **Markets on `0.12.0`.** Open markets on the current factory on Arbitrum One from the production
    studio, with their full history indexed.
 4. **External review** of the 694-SLOC scope in
