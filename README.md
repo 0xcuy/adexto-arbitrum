@@ -1,9 +1,25 @@
 # ADEXTO on Arbitrum
 
-**On Arbitrum One, launching a token opens its market in the same transaction.** The market is a
-bonding curve with no liquidity deposit. Its fees are fixed in bytecode, and there is no owner,
-admin key, proxy or withdraw function. A launch costs about **0.000065 ETH** in gas and nothing
-else.
+**Market infrastructure for the agent economy.** An agent opens a market bound to its on-chain
+identity, earns from every trade in it, and can be bought by other agents paying USDC from another
+chain. The terms are fixed in bytecode with no admin key, so nobody can change what an agent is
+paid, including us.
+
+| | What happens | Read it on chain |
+| --- | --- | --- |
+| **Open** | An agent calls `deployTrinity` with its ERC-8004 `agentId`, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)`, `AgentBound` |
+| **Earn** | The launching address is the curve's immutable `creator` and takes a fixed share of every trade, claimable in the chain's native asset | `creatorOwed()`, `claimCreatorFees()` |
+| **Get bought** | Another agent finds the market over MCP, receives an HTTP 402 quote, and pays USDC on Base by signing an EIP-3009 authorization with its own wallet. The token is delivered on the market's chain before the payment settles | `buy_token` at `adexto.xyz/api/mcp` |
+| **Verify** | Fees, treasury and supply are readable before anyone trades, and there is no owner, proxy, pause or withdraw function | `totalFeeBps()`, `protocolTreasury()` |
+
+Launchpads are built for people clicking buttons. An agent needs a market it can open without
+asking anyone, terms it can check without trusting anyone, and buyers who can pay it from wherever
+their money already is. Today an agent opens a market with a direct contract call; an MCP tool for
+opening one is next.
+
+**On Arbitrum One** this runs on AdextoFactory `0.12.0`. Opening a market costs about
+**0.000065 ETH** in gas and nothing else, the agent that opens it keeps **0.70% of every trade**,
+and the ERC-8004 registry the factory checks is live at its canonical address.
 
 [![Arbitrum One](https://img.shields.io/badge/Arbitrum_One-live-28A0F0)](https://arbiscan.io/address/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC)
 [![Factory](https://img.shields.io/badge/AdextoFactory-0.12.0-1f2937)](https://github.com/0xcuy/adexto/blob/1f1cbfc5ce97b417aa926e122e564738d4389e55/contracts/AdextoFactory.sol)
@@ -18,10 +34,10 @@ engineering notes. The contracts, their tests and the web app live in
 
 - [On Arbitrum One today](#on-arbitrum-one-today)
 - [Check it yourself in one command](#check-it-yourself-in-one-command)
-- [The problem, and what the contracts do about it](#the-problem-and-what-the-contracts-do-about-it)
+- [What the contracts guarantee an agent](#what-the-contracts-guarantee-an-agent)
 - [Security evidence](#security-evidence)
 - [Built for Arbitrum, measured on Arbitrum](#built-for-arbitrum-measured-on-arbitrum)
-- [Buying from another chain, and buying as an agent](#buying-from-another-chain-and-buying-as-an-agent)
+- [How an agent gets bought](#how-an-agent-gets-bought)
 - [Robinhood Chain](#robinhood-chain)
 - [Status](#status)
 - [Roadmap](#roadmap)
@@ -82,12 +98,14 @@ line is checked against `src/chains.ts`, and the exit code is non-zero on any mi
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#what-the-probe-checks-and-why-each-check-exists)
 explains what each check catches.
 
-## The problem, and what the contracts do about it
+## What the contracts guarantee an agent
 
-Opening a market for a new token usually takes capital, trust and a promise. Someone has to seed
-a liquidity pool. Someone holds a key that can change fees or upgrade the contract. And the
-creator is paid in supply, which is then sold into the first buyers. ADEXTO removes all three at
-the contract level, so none of it depends on anyone behaving well.
+Opening a market usually takes capital, trust and a promise. Someone has to seed a liquidity pool.
+Someone holds a key that can change fees or upgrade the contract. And the creator is paid in
+supply, which is then sold into the first buyers. An agent can supply none of those: it has no
+pool to fund, no way to trust a key it cannot audit, and no reason to be paid in something that can
+be dumped. ADEXTO removes all three at the contract level, so none of it depends on anyone behaving
+well.
 
 | Usual launch | ADEXTO on Arbitrum |
 | --- | --- |
@@ -98,8 +116,9 @@ the contract level, so none of it depends on anyone behaving well.
 | Nothing supports the price | 0.10% of every trade stays in the curve, so the **floor price only rises**, and 0.10% funds a **buyback-and-burn** that anyone may trigger |
 | Anyone can launch `$USDC` or copy a live ticker | 16 tickers, including `ETH`, `USDC`, `ARB` and every live market's, are **reserved in the constructor**, permanently and case-insensitively |
 
-Arbitrum is what makes the per-trade model practical. A creator is paid from flow, not from
-allocation, so small trades have to be worth making. At 0.02 gwei they are.
+Arbitrum is what makes the per-trade model practical. An agent is paid from flow, not from
+allocation, and machine buyers trade in small amounts, so small trades have to be worth making. At
+0.02 gwei they are.
 
 ## Security evidence
 
@@ -142,10 +161,19 @@ the contract. Every read here is one call per request.
 
 Details and evidence: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#arbitrum-nitro-specifics).
 
-## Buying from another chain, and buying as an agent
+## How an agent gets bought
 
-A buyer does not need ETH on Arbitrum to buy an Arbitrum market. The x402 gateway quotes a
-purchase payable with USDC on Base and delivers the token on Arbitrum One. The request is:
+A buyer needs no ETH on Arbitrum, no bridge and no account. An agent does it in four MCP calls to
+`https://adexto.xyz/api/mcp`, and signs the payment with its own wallet:
+
+1. `list_markets` or `get_market`: find the market, read from the same registry the site uses.
+2. `quote_buy`: the price in USDC and the tokens it delivers, without paying.
+3. `buy_token` without a payment: returns the HTTP 402 challenge, which names the asset, amount,
+   payee and deadline.
+4. `buy_token` with `xPayment`: the agent's own EIP-3009 `transferWithAuthorization` for USDC on
+   Base. The token arrives on Arbitrum One at the address that signed.
+
+The same challenge over plain HTTP, for a client without MCP:
 
 ```
 GET https://x402.adexto.xyz/v1/x402/buy/wombo   ->  402 Payment Required
@@ -160,16 +188,16 @@ protocol and never the buyer. A request that cannot be served is refused while t
 authorisation is still unspent. The first delivery on Arbitrum is
 [`0x45d85fb0…10bc4b14`](https://arbiscan.io/tx/0x45d85fb0a6eb24479db156487151ecf6bcdc4a3cd7464203d30d66cb10bc4b14).
 
-Agents get the same market through an MCP server at `https://adexto.xyz/api/mcp`:
-`list_markets`, `get_market`, `quote_buy`, `how_to_pay`, `buy_token` and `trade_history` are
-free. `pay_and_buy` executes a purchase end to end. It needs a key, is signed by the operator's
-wallet rather than the agent's, and is hard-capped at 0.20 USDC to our own treasury, so an agent
-hijacked by prompt injection can do no more than that. Integration reference:
-[adexto.xyz/x402](https://adexto.xyz/x402).
+One tool is different, and says so in its own description. `pay_and_buy` completes a purchase for
+a model that cannot sign, using the operator's wallet on the server rather than the agent's. It
+needs a key and is hard-capped at 0.20 USDC to our own treasury, so an agent hijacked by prompt
+injection can do no more than that. `buy_token` is the path where the agent pays from funds it
+controls. Integration reference: [adexto.xyz/x402](https://adexto.xyz/x402).
 
-A launch can bind an ERC-8004 agent identity. The factory calls `ownerOf(agentId)` on the
-registry and refuses the binding unless the launcher owns that agent. Binding is opt-in, so a
-market without an agent reads `agentIdOf` 0.
+On the other side of the trade, the market's own agent identity is checked when the market is
+opened: the factory calls `ownerOf(agentId)` on the ERC-8004 registry and refuses the binding
+unless the launcher owns that agent. Binding is opt-in, so a market opened without one reads
+`agentIdOf` 0, as `$WOMBO` does.
 
 ## Robinhood Chain
 
@@ -204,7 +232,9 @@ Reserved tickers live in storage, so the runtime bytecode stays byte-identical.
 | Launch from the web studio | **Live** at [adexto.xyz/studio](https://adexto.xyz/studio) |
 | `$WOMBO` on Arbitrum One | **Live** on `0.11.0`. 5 fills, all through the cross-chain gateway |
 | Buy with USDC on Base, receive on Arbitrum One | **Live** |
-| MCP server for agents | **Live.** The paying tool is key-gated and capped |
+| Agents discover, quote and buy over MCP | **Live.** `buy_token` takes the agent's own signature; the operator-signed `pay_and_buy` is key-gated and capped |
+| Agent-bound launch | **Live in the factory.** `ownerOf(agentId)` is checked at launch. No agent-bound market on Arbitrum One yet |
+| Agent opens a market through MCP | **Next.** A direct contract call works today |
 | Creator earnings, claimed in one transaction per chain | **Live** at [adexto.xyz/creator](https://adexto.xyz/creator) |
 | Robinhood Chain | **Next.** Readiness checked, nothing deployed yet |
 | Source on Sourcify | **Exact match** for AdextoFactory [`0.12.0`](https://repo.sourcify.dev/42161/0x75EeDEd196D2BE283d815D52F617eB70bCe865bC), AdextoFactory [`0.11.0`](https://repo.sourcify.dev/42161/0xE17f1027FC5f294327D701829baeD9d6519e922C) (built from commit [`98ffb1c`](https://github.com/0xcuy/adexto/commit/98ffb1c900f4c9e14d035e279ef095e25ac8e4ba)) and the [`$WOMBO` curve](https://repo.sourcify.dev/42161/0xB71A0bAfF60795DEde0C7f89F6AD095f7186C712) |
@@ -218,17 +248,20 @@ Each milestone ends in something the chain or this repository can show.
 1. **Robinhood Chain mainnet.** Deploy AdextoFactory `0.12.0` byte-identical, with the tickers of
    tokenized equities reserved at construction. Done when `npm run probe:robinhood` lists the
    factory and passes.
-2. **Explorer-verified source everywhere.** Sourcify already has exact matches for both factory
+2. **An MCP tool to open a market.** It returns an unsigned `deployTrinity` transaction for the
+   agent to sign with its own key, so nobody else's key is ever held. Done when an agent opens an
+   agent-bound market on Arbitrum One through MCP alone.
+3. **Explorer-verified source everywhere.** Sourcify already has exact matches for both factory
    generations. Arbiscan and the `$WOMBO` token complete it, so reading the source never depends
    on running the probe.
-3. **Markets on `0.12.0`.** Open markets on the current factory on Arbitrum One from the production
+4. **Markets on `0.12.0`.** Open markets on the current factory on Arbitrum One from the production
    studio, with their full history indexed.
-4. **External review** of the 694-SLOC scope in
+5. **External review** of the 694-SLOC scope in
    [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md).
 
 ## Contract call traps
 
-For anyone calling the factory directly. Each one reverts if ignored.
+For an agent, or anyone, calling the factory directly. Each one reverts if ignored.
 
 - `initialSupply` is in **whole tokens**, not wei. `MAX_SUPPLY` is `1e12` whole tokens, so
   `parseEther(…)` fails with `Factory: bad supply`.
