@@ -1,0 +1,22 @@
+{
+  "name": "adexto-arbitrum",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ADEXTO on Arbitrum: permissionless bonding-curve markets with immutable fees and no admin key, verifiable from the chain with one read-only command.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "probe": "node scripts/probe.ts",
+    "probe:robinhood": "node scripts/probe.ts robinhood",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ethers": "6.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.1",
+    "typescript": "5.7.2"
+  }
+}
