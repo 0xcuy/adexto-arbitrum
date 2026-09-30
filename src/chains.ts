@@ -35,6 +35,8 @@ export interface ChainTarget {
   explorer: string;
   /** Newest first. Empty for a chain the protocol has not been deployed to yet. */
   factories: FactoryGeneration[];
+  /** Tickers the current factory reserves on this chain beyond `RESERVED_TICKERS`, or a sample of them. */
+  extraReserved?: readonly string[];
 }
 
 /**
@@ -70,21 +72,29 @@ export const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
  */
 export const SOURCE = {
   repo: "https://github.com/0xcuy/adexto",
-  commit: "1f1cbfc5ce97b417aa926e122e564738d4389e55",
+  commit: "71b5adfe774ed7a93f9fe589b4430c8122febb1f",
   compile: "node scripts/compile-contracts.mjs --via-ir",
-  maskedKeccak: "0x83adf2725ca03af986bf18a15a4b675eeba4e288b0515bbd370342d1de3dac3f",
+  maskedKeccak: "0x0e70cb93fbb10b66109cc71d547329cb48b4c3953791c2c4609519ff92221d62",
   maskedSlots: 2,
 } as const;
 
 /**
- * Tickers the current factory reserved in its constructor. There is no function that adds
- * to or releases from this list, so every one of them is unlaunchable on that factory for
- * as long as the chain exists. Case-insensitive: `eth` is rejected along with `ETH`.
+ * Tickers every ADEXTO v1 factory reserved in its constructor. There is no function that adds
+ * to or releases from this list, so every one of them is unlaunchable on that factory for as
+ * long as the chain exists. Case-insensitive: `eth` is rejected along with `ETH`. The full
+ * per-chain lists are in `scripts/reserved-symbols.json` of the main repository.
  */
 export const RESERVED_TICKERS = [
   "ADEXTO", "ADT", "ZEEBO", "WOMBO", "BLOOP", "PARCEL",
   "ETH", "WETH", "USDC", "USDT", "BTC", "WBTC", "0G", "A0GI", "MON", "ARB",
 ] as const;
+
+/**
+ * Robinhood Chain's factory reserves 196 more: `USDG` and the 195 tokenized stocks listed as
+ * active on chain 4663 when it was deployed. The probe spot-checks this sample, including
+ * one-letter and common-word tickers, rather than all 196.
+ */
+export const ROBINHOOD_RESERVED_SAMPLE = ["USDG", "AAPL", "TSLA", "NVDA", "SPY", "COIN", "P", "ON"] as const;
 
 export const ARBITRUM_ONE: ChainTarget = {
   key: "arbitrum",
@@ -93,16 +103,21 @@ export const ARBITRUM_ONE: ChainTarget = {
   nativeSymbol: "ETH",
   rpcUrl: "https://arb1.arbitrum.io/rpc",
   explorer: "https://arbiscan.io",
+  /**
+   * ADEXTO v1 launches every new market. 0.11.0 stays listed because `$WOMBO` lives on it and
+   * keeps its terms forever. Other earlier generations have no listed market on Arbitrum One
+   * and are named once, as retired, in the main repository's audit/README.md.
+   */
   factories: [
     {
-      version: "0.12.0",
-      address: "0x75EeDEd196D2BE283d815D52F617eB70bCe865bC",
-      runtimeBytes: 21_403,
-      runtimeKeccak: "0xc0841d5a2193f21df6b7f685bbe39fd5ee6411cbf89bf76e1b99d867174d8f0f",
+      version: "1.0.0",
+      address: "0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E",
+      runtimeBytes: 21_806,
+      runtimeKeccak: "0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4",
       current: true,
       deployment: {
-        block: 509_845_969,
-        tx: "0x9084a9ae5d7a765563ff2c935980053fa11a6ff87fc114bc8c3c9bb35cec35f5",
+        block: 510_474_755,
+        tx: "0xf78fb444c72d5f2a150392a4ea4991e0caf0a11c060107d0a9f2d46f7b72ddf9",
       },
     },
     {
@@ -112,23 +127,16 @@ export const ARBITRUM_ONE: ChainTarget = {
       runtimeKeccak: "0xcbb89e32ae973400723287f16f32e87f039efcef1c1f814c5805bd1a6fe3add8",
       current: false,
     },
-    {
-      version: "0.10.0",
-      address: "0x8F3948902c48489fc9E7287590E7eb8A8E915A64",
-      runtimeBytes: 20_054,
-      runtimeKeccak: "0x78eab848d1c53a9f4893f20a417c2dc3b8f3f639cd993d21a78e8740457da4e9",
-      current: false,
-    },
   ],
 };
 
 /**
  * Robinhood Chain, an Arbitrum Orbit L2 settling to Ethereum, with ETH as gas.
  *
- * Nothing is deployed here yet, and the empty list says so. What has been checked is
- * whether the current bytecode could be deployed unmodified: the ERC-8004 registry the
- * factory hard-codes is present at the same address on mainnet, and absent on testnet,
- * where agent-bound launches would therefore be unavailable.
+ * ADEXTO v1 is the first generation here, byte-identical to Arbitrum One's. Its constructor
+ * reserved 212 tickers: the base 16, `USDG`, and the 195 tokenized stocks active on the
+ * chain at deployment, so no curve token can pose as a stock. The testnet has no ERC-8004
+ * registry, which is why the deployment is on mainnet.
  */
 export const ROBINHOOD: ChainTarget = {
   key: "robinhood",
@@ -137,7 +145,20 @@ export const ROBINHOOD: ChainTarget = {
   nativeSymbol: "ETH",
   rpcUrl: "https://rpc.mainnet.chain.robinhood.com",
   explorer: "https://robinhoodchain.blockscout.com",
-  factories: [],
+  factories: [
+    {
+      version: "1.0.0",
+      address: "0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D",
+      runtimeBytes: 21_806,
+      runtimeKeccak: "0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4",
+      current: true,
+      deployment: {
+        block: 76_864_198,
+        tx: "0x2a8f8a0c8ef6ff11ec907e13979788c927bd810b8efb8d250895be54705334c9",
+      },
+    },
+  ],
+  extraReserved: ROBINHOOD_RESERVED_SAMPLE,
 };
 
 export const ROBINHOOD_TESTNET: ChainTarget = {
@@ -161,7 +182,7 @@ export function targetByChainId(chainId: number): ChainTarget | undefined {
 }
 
 /**
- * Launch parameters the site uses on `0.12.0`: a 1.00% total fee, carved four ways.
+ * Launch parameters the site uses on ADEXTO v1: a 1.00% total fee, carved four ways.
  * `swapFeeBps` is the whole fee a trader pays; depth is the remainder after the other three.
  *
  *   creator  70 bps · depth 10 bps · buyback 10 bps · protocol 10 bps (a factory constant)
@@ -203,11 +224,18 @@ export const CURVE_ABI = [
   "function spotPriceNativePerToken() view returns (uint256)",
 ] as const;
 
+/**
+ * Both token generations. A v1 token measures its launch window in seconds (`launchTime`,
+ * `ANTI_SNIPE_WINDOW`, per-wallet `maxWalletAmount`); a 0.11.0 token counted blocks
+ * (`launchBlock`, `ANTI_SNIPE_BLOCKS`). A getter the token lacks reads as n/a.
+ */
 export const TOKEN_ABI = [
   "function name() view returns (string)",
   "function totalSupply() view returns (uint256)",
   "function launchBlock() view returns (uint256)",
+  "function launchTime() view returns (uint256)",
   "function ANTI_SNIPE_BLOCKS() view returns (uint256)",
+  "function ANTI_SNIPE_WINDOW() view returns (uint256)",
 ] as const;
 
 export const MULTICALL3_ABI = ["function getBlockNumber() view returns (uint256)"] as const;

@@ -85,7 +85,8 @@ line("gas price", `${ethers.formatUnits(gasPrice, "gwei")} gwei`);
 /**
  * `block.number` as a contract sees it. On Arbitrum Nitro chains it tracks the parent
  * chain's block number, not the L2 head above, and every block-counted window in a
- * contract inherits that clock. The token's anti-sniper window is one of them.
+ * contract inherits that clock. The 0.11.0 token's anti-sniper window was one of them, which
+ * is why ADEXTO v1 measures its launch window with `block.timestamp` instead.
  */
 if ((await provider.getCode(MULTICALL3)) !== "0x") {
   const mc = new ethers.Contract(MULTICALL3, MULTICALL3_ABI, provider);
@@ -207,14 +208,15 @@ async function probeCurrent(
     line(name, v.ok ? `${v.value}  ${check(pass(v.value), `${gen.version} ${name}`)}` : v.error);
   }
 
-  // Reserved tickers, including a lower-case spelling, which the factory upper-cases.
+  // Reserved tickers, including a lower-case spelling, which the factory upper-cases, plus the
+  // chain's own additions (Robinhood Chain: a sample of its tokenized-stock tickers).
+  const tickers = [...RESERVED_TICKERS, "eth", ...(target!.extraReserved ?? [])];
   let locked = 0;
-  for (const t of [...RESERVED_TICKERS, "eth"]) {
+  for (const t of tickers) {
     const free = await call<boolean>("isSymbolAvailable", t);
     if (free.ok && free.value === false) locked++;
   }
-  const expected = RESERVED_TICKERS.length + 1;
-  line("reserved", `${locked}/${expected} tickers unlaunchable  ${check(locked === expected, "reserved tickers")}`);
+  line("reserved", `${locked}/${tickers.length} tickers unlaunchable  ${check(locked === tickers.length, "reserved tickers")}`);
 
   // A stranger's launch, simulated. Random caller, random unused ticker, the site's fee model.
   const caller = process.env["PROBE_FROM"] ? ethers.getAddress(process.env["PROBE_FROM"]) : ethers.Wallet.createRandom().address;
@@ -257,7 +259,7 @@ async function probeMarket([token, curve, creator, symbol, deployedAt]: [string,
     const r = await attempt(() => contract.getFunction(name)() as Promise<unknown>);
     return r.ok ? String(r.value) : "n/a";
   };
-  const [version, swaps, volume, vault, burned, depth, creatorBps, buyback, protocol, launchBlock] = await Promise.all([
+  const [version, swaps, volume, vault, burned, depth, creatorBps, buyback, protocol, launchBlock, launchTime] = await Promise.all([
     read(c, "VERSION"),
     read(c, "swapCount"),
     read(c, "totalVolumeNative"),
@@ -268,13 +270,19 @@ async function probeMarket([token, curve, creator, symbol, deployedAt]: [string,
     read(c, "treasuryBuybackBps"),
     read(c, "protocolFeeBps"),
     read(t, "launchBlock"),
+    read(t, "launchTime"),
   ]);
   const eth = (v: string) => (v === "n/a" ? v : `${ethers.formatEther(BigInt(v))} ${target!.nativeSymbol}`);
   console.log(`    $${symbol}  token ${token}  curve ${curve}`);
   console.log(`      creator ${creator}, launched ${new Date(Number(deployedAt) * 1000).toISOString()}, curve ${version}`);
   console.log(`      fees bps: depth ${depth} · creator ${creatorBps} · buyback ${buyback} · protocol ${protocol}`);
   console.log(`      swaps ${swaps}, volume ${eth(volume)}, buyback vault ${eth(vault)}, burned ${burned === "n/a" ? burned : ethers.formatEther(BigInt(burned))}`);
-  console.log(`      token launchBlock ${launchBlock}  (block.number at launch, parent-chain clock on Nitro)`);
+  if (launchTime !== "n/a") {
+    // v1: the launch window is measured in seconds from this timestamp.
+    console.log(`      token launchTime ${launchTime} (${new Date(Number(launchTime) * 1000).toISOString()}), launch window in seconds`);
+  } else {
+    console.log(`      token launchBlock ${launchBlock}  (block.number at launch, parent-chain clock on Nitro)`);
+  }
 }
 
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
