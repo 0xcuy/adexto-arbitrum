@@ -1,72 +1,205 @@
-# ADEXTO on Arbitrum
+<a id="readme-top"></a>
 
-**Market infrastructure for the agent economy.** An agent opens a market bound to its on-chain
-identity, earns from every trade in it, and can be bought by other agents paying USDC from another
-chain. The terms are fixed in bytecode with no admin key, so nobody can change what an agent is
-paid, including us.
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="ADEXTO on Arbitrum: markets for AI agents on Arbitrum One and Robinhood Chain. One bytecode, no admin key." width="100%">
+</p>
 
-| | What happens | Read it on chain |
-| --- | --- | --- |
-| **Open** | An agent calls `deployTrinity` with its ERC-8004 `agentId`, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)`, `AgentBound` |
-| **Earn** | The launching address is the curve's immutable `creator` and takes a fixed share of every trade, claimable in the chain's native asset | `creatorOwed()`, `claimCreatorFees()` |
-| **Get bought** | Another agent finds the market over MCP, receives an HTTP 402 quote, and pays USDC on Base by signing an EIP-3009 authorization with its own wallet. The token is delivered on the market's chain before the payment settles | `buy_token` at `adexto.xyz/api/mcp` |
-| **Verify** | Fees, treasury and supply are readable before anyone trades, and there is no owner, proxy, pause or withdraw function | `totalFeeBps()`, `protocolTreasury()` |
+<p align="center">
+  <b>An agent opens a market bound to its on-chain identity, earns from every trade in it,<br>
+  and gets bought by other agents paying USDC from another chain.</b><br>
+  The terms are fixed in bytecode with no admin key, so nobody can change what an agent is paid, including us.
+</p>
 
-Launchpads are built for people clicking buttons. An agent needs a market it can open without
-asking anyone, terms it can check without trusting anyone, and buyers who can pay it from wherever
-their money already is. Today an agent opens a market with a direct contract call; an MCP tool for
-opening one is next.
+<p align="center">
+  <a href="https://adexto.xyz/token/sai?chain=42161"><img src="https://img.shields.io/badge/Arbitrum_One-live-28A0F0?style=for-the-badge" alt="Live on Arbitrum One"></a>
+  <a href="https://adexto.xyz/token/sai?chain=4663"><img src="https://img.shields.io/badge/Robinhood_Chain-live-00C805?style=for-the-badge" alt="Live on Robinhood Chain"></a>
+  <a href="https://repo.sourcify.dev/42161/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E"><img src="https://img.shields.io/badge/Sourcify-exact_match-16A34A?style=for-the-badge" alt="Sourcify exact match"></a>
+  <a href="https://adexto.xyz/mcp"><img src="https://img.shields.io/badge/MCP-10_tools-111827?style=for-the-badge" alt="MCP server with ten tools"></a>
+  <a href="https://adexto.xyz/x402"><img src="https://img.shields.io/badge/x402-pay_USDC_on_Base-0052FF?style=for-the-badge" alt="x402: pay with USDC on Base"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6B7280?style=for-the-badge" alt="MIT license"></a>
+</p>
 
-**On Arbitrum One** this runs on ADEXTO v1, AdextoFactory `1.0.0`. Opening a market costs about
-**0.000066 ETH** in gas and nothing else, the agent that opens it keeps **0.70% of every trade**,
-and the ERC-8004 registry the factory checks is live at its canonical address. The same bytecode
-runs on **Robinhood Chain**, the other Arbitrum chain it is deployed to.
+<p align="center">
+  <a href="https://adexto.xyz"><b>Live app</b></a> &nbsp;·&nbsp;
+  <a href="https://adexto.xyz/token/sai?chain=42161">SAi Arbitrum</a> &nbsp;·&nbsp;
+  <a href="https://adexto.xyz/token/sai?chain=4663">SAi Robin</a> &nbsp;·&nbsp;
+  <a href="https://adexto.xyz/agent-compute">Agent Compute</a> &nbsp;·&nbsp;
+  <a href="https://adexto.xyz/security">Security</a> &nbsp;·&nbsp;
+  <a href="docs/ARCHITECTURE.md">Architecture</a> &nbsp;·&nbsp;
+  <a href="https://github.com/0xcuy/adexto">Protocol repo</a>
+</p>
 
-[![Arbitrum One](https://img.shields.io/badge/Arbitrum_One-live-28A0F0)](https://arbiscan.io/address/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E)
-[![Robinhood Chain](https://img.shields.io/badge/Robinhood_Chain-live-00C805)](https://robinhoodchain.blockscout.com/address/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D)
-[![Factory](https://img.shields.io/badge/AdextoFactory-1.0.0-1f2937)](https://github.com/0xcuy/adexto/blob/71b5adfe774ed7a93f9fe589b4430c8122febb1f/contracts/AdextoFactory.sol)
-[![Admin keys](https://img.shields.io/badge/admin_keys-none-16a34a)](docs/ARCHITECTURE.md#what-nobody-can-do-including-us)
-[![Sourcify](https://img.shields.io/badge/Sourcify-exact_match-16a34a)](https://repo.sourcify.dev/42161/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
-
-This repository is the Arbitrum side of [ADEXTO](https://adexto.xyz). It holds the chain registry,
-a read-only probe that checks every claim below against the chain, and the Arbitrum-specific
-engineering notes. The contracts, their tests and the web app live in
-[`0xcuy/adexto`](https://github.com/0xcuy/adexto). This repository does not duplicate them.
-
-- [On Arbitrum One today](#on-arbitrum-one-today)
-- [Check it yourself in one command](#check-it-yourself-in-one-command)
-- [What the contracts guarantee an agent](#what-the-contracts-guarantee-an-agent)
-- [Security evidence](#security-evidence)
-- [Built for Arbitrum, measured on Arbitrum](#built-for-arbitrum-measured-on-arbitrum)
-- [How an agent gets bought](#how-an-agent-gets-bought)
-- [Robinhood Chain](#robinhood-chain)
-- [Status](#status)
-- [Roadmap](#roadmap)
-- [Contract call traps](#contract-call-traps)
-- [Repository boundary](#repository-boundary)
+> [!TIP]
+> One read-only command checks the factories, their bytecode and their markets against the chain:
+> [`npm run probe`](#check-it-yourself). No key, no wallet, no transaction.
 
 ---
 
-## On Arbitrum One today
+## 🔁 The loop an agent runs
 
-| | |
-| --- | --- |
-| **AdextoFactory 1.0.0** (ADEXTO v1, current) | [`0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E`](https://arbiscan.io/address/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E), deployed in block 510,474,755 ([tx](https://arbiscan.io/tx/0xf78fb444c72d5f2a150392a4ea4991e0caf0a11c060107d0a9f2d46f7b72ddf9)) |
-| Runtime bytecode | 21,806 bytes, keccak `0x1ca02ca5…81fd4`, byte-identical on Robinhood Chain, 0G, Base and Monad |
-| Source | A `--via-ir` build of commit [`71b5adf`](https://github.com/0xcuy/adexto/commit/71b5adfe774ed7a93f9fe589b4430c8122febb1f) with solc 0.8.37. **Exact match on [Sourcify](https://repo.sourcify.dev/42161/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E)**, creation and runtime code both. The probe checks the same build locally: with the two treasury immutables zeroed, the code on chain hashes to `0x0e70cb93…221d62` |
-| Launch cost | 3,280,277 gas, **0.000066 ETH** at 0.020 gwei (about $0.18). Simulated on 2026-10-01. The creator attaches no ETH |
-| Trading fee | **1.00%**, carved four ways: creator 0.70 · depth 0.10 · buyback-and-burn 0.10 · protocol 0.10 |
-| Launch window | For the first **180 seconds**, no wallet may hold more than 1% of supply. Measured in seconds, not blocks |
-| Admin surface | None. No owner, no proxy, no pause, no withdraw, no fee setter |
-| Reference market | [`$WOMBO`](https://adexto.xyz/token/wombo?chain=42161), on the `0.11.0` factory [`0xE17f…922C`](https://arbiscan.io/address/0xE17f1027FC5f294327D701829baeD9d6519e922C). All five fills so far came through the cross-chain gateway |
-| ERC-8004 identity registry | [`0x8004A169…a432`](https://arbiscan.io/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432). The factory checks agent ownership against it at launch |
+| | Step | What happens | Read it on chain |
+|:-:|---|---|---|
+| 🚀 | **Open** | The agent calls `deployTrinity` with its ERC-8004 `agentId`, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)` · `AgentBound` |
+| 💸 | **Earn** | The launching address is the curve's immutable `creator` and takes a fixed share of every trade, **0.70%** on the Studio's standard preset, claimable in ETH. It holds zero tokens | `creatorOwed()` · `claimCreatorFees()` |
+| 🤝 | **Get bought** | Another agent finds the market over MCP, gets an HTTP 402 quote and signs a USDC authorization on Base with its own wallet. The token lands on Arbitrum **before** the payment settles | `buy_token` at `adexto.xyz/api/mcp` |
+| 🔑 | **Stake for compute** | Any holder can stake the token. An active stake opens the market's agent over MCP and an API key for model calls | `stakedOf` · `isActive` |
+| 🔍 | **Verify** | Fees, treasury and supply are readable before anyone trades. No owner, proxy, pause or withdraw function exists to call | `totalFeeBps()` · `protocolTreasury()` |
 
-Launch from the web at [adexto.xyz/studio](https://adexto.xyz/studio). New markets open on v1.
-`$WOMBO` stays on `0.11.0` and keeps the terms it was born with, because all of its fee legs are
-`immutable`.
+Opening a market on Arbitrum One costs about **0.000065 ETH** of gas and nothing else. Arbitrum is what makes
+the per-trade model practical: an agent is paid from flow, not from an allocation, and machine buyers trade in
+small amounts, so small trades have to be worth making. At 0.02 gwei they are.
 
-## Check it yourself in one command
+## 🔵 Live on Arbitrum One
+
+<table>
+  <tr>
+    <td width="96" align="center"><img src="docs/assets/sai-arbitrum.png" width="72" alt="SAi Arbitrum logo"></td>
+    <td>
+      <b><a href="https://adexto.xyz/token/sai?chain=42161">SAi Arbitrum</a></b> &nbsp;<code>$SAI</code> &nbsp;·&nbsp; ADEXTO v1<br>
+      Launched from the production Studio by an agent wallet bound to ERC-8004 agent <b>#1566</b>, which holds zero
+      $SAI. Launch: 3,250,872 gas, <b>0.000065 ETH</b>. Its first fill was a cross-chain buy paid in USDC on Base
+      (<a href="https://arbiscan.io/tx/0xbed111e865d325f24ca68fb9bdb44f87f3e979e78b706e967791a3e8e23773b0">24,013.38 SAI delivered</a>),
+      and the buyer staked all of it in SAi Arbitrum's stake contract.
+    </td>
+  </tr>
+  <tr>
+    <td width="96" align="center"><img src="docs/assets/wombo.png" width="72" alt="WOMBO logo"></td>
+    <td>
+      <b><a href="https://adexto.xyz/token/wombo?chain=42161">WOMBO</a></b> &nbsp;<code>$WOMBO</code> &nbsp;·&nbsp; factory <code>0.11.0</code><br>
+      The reference market on the earlier factory. All five of its fills came through the cross-chain gateway, the first in
+      <a href="https://arbiscan.io/tx/0x45d85fb0a6eb24479db156487151ecf6bcdc4a3cd7464203d30d66cb10bc4b14">0x45d85fb0…</a>.
+      It stakes in the Arbitrum stake hub, and it keeps the terms it was born with, because every fee leg is
+      <code>immutable</code>.
+    </td>
+  </tr>
+</table>
+
+### Contracts on Arbitrum One · chain 42161
+
+| Contract | Address | Notes |
+|---|---|---|
+| **AdextoFactory `1.0.0`** · ADEXTO v1 | [`0x79DF…0E0E`](https://arbiscan.io/address/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E) | Every new launch. Block 510,474,755 · [Sourcify](https://repo.sourcify.dev/42161/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E) |
+| AdextoFactory `0.11.0` | [`0xE17f…922C`](https://arbiscan.io/address/0xE17f1027FC5f294327D701829baeD9d6519e922C) | $WOMBO's generation · [Sourcify](https://repo.sourcify.dev/42161/0xE17f1027FC5f294327D701829baeD9d6519e922C) |
+| AdextoAgentStake · $SAI | [`0x2fc2…B508`](https://arbiscan.io/address/0x2fc2A49ea2e4357541Dda9488DCeadCD0c43B508) | SAi Arbitrum's own stake, minimum 10,000 SAI · [Sourcify](https://repo.sourcify.dev/42161/0x2fc2A49ea2e4357541Dda9488DCeadCD0c43B508) |
+| **AdextoStakeHub** | [`0xdf88…ddf3`](https://arbiscan.io/address/0xdf8891bA9fd8e3DC2E7D0A0ccae279247cd2ddf3) | Every other Arbitrum One market, from its first block · [Sourcify](https://repo.sourcify.dev/42161/0xdf8891bA9fd8e3DC2E7D0A0ccae279247cd2ddf3) |
+| ERC-8004 Identity Registry | [`0x8004…a432`](https://arbiscan.io/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432) | Third-party and upgradeable; the factory only reads `ownerOf(agentId)` from it |
+| Protocol treasury | [`0x2426…E967`](https://arbiscan.io/address/0x24268Fffc119ec5550F68e80D94476fD64daE967) | Immutable destination of the 0.10% protocol leg |
+
+## 🟢 Live on Robinhood Chain
+
+<table>
+  <tr>
+    <td width="96" align="center"><img src="docs/assets/sai-robin.png" width="72" alt="SAi Robin logo"></td>
+    <td>
+      <b><a href="https://adexto.xyz/token/sai?chain=4663">SAi Robin</a></b> &nbsp;<code>$SAI</code> &nbsp;·&nbsp; ADEXTO v1<br>
+      The first market from the v1 factory anywhere, and the first on Robinhood Chain, bound to ERC-8004 agent
+      <b>#6525</b>. Launch: 3,250,286 gas, <b>0.000066 ETH</b>. Its one fill so far is a buy from the creator's own
+      wallet through the terminal. The x402 gateway quotes it, but no paid delivery has gone to this chain yet.
+    </td>
+  </tr>
+</table>
+
+The same runtime bytecode as Arbitrum One runs here, unmodified, because the ERC-8004 registry the factory
+hard-codes as a `constant` exists at the same address with the same implementation.
+
+Robinhood Chain carries tokenized equities, which makes any permissionless launcher an impersonation risk:
+nothing else on chain stops a stranger from opening a market under a stock's ticker. The factory answers that
+without an admin key. Its constructor reserved **212 tickers**: the base 16, `USDG`, and the 195 tokenized
+stocks active on chain 4663 at deployment, one-letter and common-word tickers such as `P` and `ON` included.
+Nothing can release them, and a stock listed later needs a later factory. The list is
+[`scripts/reserved-symbols.json`](https://github.com/0xcuy/adexto/blob/main/scripts/reserved-symbols.json).
+
+| Contract | Address | Notes |
+|---|---|---|
+| **AdextoFactory `1.0.0`** · ADEXTO v1 | [`0x8e63…7D7D`](https://robinhoodchain.blockscout.com/address/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D) | Block 76,864,198 · 212 tickers reserved · [Sourcify](https://repo.sourcify.dev/4663/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D) |
+| AdextoAgentStake · $SAI | [`0x01b2…bc1B`](https://robinhoodchain.blockscout.com/address/0x01b250a2db25561dB185f4628B93C72048D8bc1B) | SAi Robin's own stake, minimum 10,000 SAI · [Sourcify](https://repo.sourcify.dev/4663/0x01b250a2db25561dB185f4628B93C72048D8bc1B) |
+| **AdextoStakeHub** | [`0x05EF…600B`](https://robinhoodchain.blockscout.com/address/0x05EFA7F066FcbefbE650EDd58583C107831A600B) | Every other Robinhood Chain market, from its first block · [Sourcify](https://repo.sourcify.dev/4663/0x05EFA7F066FcbefbE650EDd58583C107831A600B) |
+
+ADEXTO's contracts on both chains have no owner, proxy, pause or withdraw function.
+
+## 🧭 How it works
+
+```mermaid
+flowchart LR
+    subgraph seller["Creator agent"]
+        ID["ERC-8004 identity"]
+    end
+    subgraph arb["Arbitrum One · Robinhood Chain"]
+        F["AdextoFactory v1"]
+        C["Bonding curve<br/>100% of supply"]
+        S["Stake<br/>own contract or hub"]
+    end
+    subgraph buyer["Buyer agent"]
+        M["MCP<br/>quote_buy · buy_token"]
+        U["USDC on Base<br/>EIP-3009 signature"]
+    end
+    K["Agent Compute key"]
+
+    ID -->|"deployTrinity(agentId)"| F --> C
+    M -->|"HTTP 402 quote"| U
+    U -->|"delivered first, charged second"| C
+    C -->|"creator share of every trade"| ID
+    C -->|"tokens"| S --> K
+```
+
+| Fee leg on a v1 market | Share of the 1.00% | Where it goes |
+|---|---|---|
+| Creator | **0.70%** | `creatorOwed`, claimable only to the creator fixed at launch |
+| Depth | 0.10% | Stays in the curve, so the floor price only rises |
+| Buyback | 0.10% | A vault anyone can spend on a buy-and-burn, at most once an hour |
+| Protocol | 0.10% | The immutable treasury above |
+
+## 🤝 How an agent gets bought
+
+A buyer needs no ETH on Arbitrum, no bridge and no account. An agent does it in four MCP calls to
+`https://adexto.xyz/api/mcp`, and signs the payment with its own wallet:
+
+1. **`list_markets`** or **`get_market`** (`symbol "SAI"`, `chainId 42161`): find the market, from the same
+   registry the site reads.
+2. **`quote_buy`**: the price in USDC and the tokens it delivers, without paying.
+3. **`buy_token`** without a payment: returns the HTTP 402 challenge, naming the asset, amount, payee and
+   deadline.
+4. **`buy_token`** with `xPayment`: the agent's own EIP-3009 `transferWithAuthorization` for USDC on Base. The
+   token arrives on Arbitrum One at the address that signed.
+
+The same challenge over plain HTTP, for a client without MCP:
+
+```bash
+curl -i "https://x402.adexto.xyz/v1/x402/buy/sai?chain=42161&to=0x000000000000000000000000000000000000dEaD"
+# 402 Payment Required
+#   pay      0.10 USDC on Base, EIP-3009 transferWithAuthorization
+#   deliver  ≈ 23,911 $SAI on Arbitrum One, bought on the curve from 0.0000356 ETH of inventory
+#   to       the address that signed the payment                              (quoted 2 Oct 2026)
+```
+
+**Delivery happens before the charge.** The token is bought on Arbitrum first, and the USDC authorization is
+settled only once that buy has succeeded, so a failed delivery costs the protocol and never the buyer. A request
+that cannot be served is refused while the buyer's authorization is still unspent.
+
+One tool is different, and says so in its own description: `pay_and_buy` completes a purchase for a model that
+cannot sign, using the operator's wallet on the server. It needs an API key and is hard-capped at 0.20 USDC to
+our own treasury, so an agent hijacked by prompt injection can do no more than that. Integration reference:
+[adexto.xyz/x402](https://adexto.xyz/x402).
+
+## 🔑 Stake, and get compute for it
+
+Every market on both chains can be staked, and staking opens the market's agent over MCP (`ask_agent`) and an
+API key for an OpenAI-compatible endpoint serving DeepSeek-V4-Flash on 0G Compute. No lock, no reward, unstake
+at any time.
+
+| | SAi Arbitrum · SAi Robin | Every other market |
+|---|---|---|
+| **Contract** | each market's own `AdextoAgentStake` | the chain's `AdextoStakeHub`, from the token's first block |
+| **Minimum** | 10,000 SAI | 0.001% of the token's supply |
+| **Key allowance** | a tier set by the stake | **paid for by that market's own trading**: half of the 0.10% protocol fee its trades pay, shared by stake |
+| **Today** | 24,013 SAI staked on Arbitrum One, none yet on Robinhood Chain | $WOMBO stakeable, nothing staked yet |
+
+A hub key opens switched off, fills only with fees paid after it was issued, and switches on once one request's
+worth has accrued. A market nobody trades funds nothing.
+
+<a id="check-it-yourself"></a>
+
+## ⚡ Check it yourself
 
 ```bash
 git clone https://github.com/0xcuy/adexto-arbitrum && cd adexto-arbitrum
@@ -75,230 +208,138 @@ npm run probe            # Arbitrum One
 npm run probe:robinhood  # Robinhood Chain
 ```
 
-It needs Node 22.18 or newer and no key. It sends no transaction. Output from 2026-10-01, trimmed:
+It needs Node 22.18 or newer and no key, and it sends no transaction. Output from 2 October 2026, trimmed:
 
 ```
 === Arbitrum One · chainId 42161 ===
-  eth_chainId      42161  ok
-  head block       510487237
-  block.number     26093503  (inside the EVM)
+  block.number     26103225  (inside the EVM)
   factory 1.0.0 (current)  0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E
   runtime          21806 B  ok
   keccak           0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4  ok
-  VERSION          1.0.0  ok
   source           0x0e70cb93fbb10b66109cc71d547329cb48b4c3953791c2c4609519ff92221d62  ok
   deployed         block 510474755, status 1, 5197955 gas  ok
-  PROTOCOL_FEE_BPS 10  ok
   protocolTreasury 0x24268Fffc119ec5550F68e80D94476fD64daE967  ok
   reserved         17/17 tickers unlaunchable  ok
-  launch sim       ok as 0x0603…68e8 ($PRB6536), no native attached
-  launch gas       3280277 gas = 0.000065618661108 ETH at 0.020004 gwei
+  launch sim       ok, no native attached
+  launch gas       3263230 gas = 0.00006546692026 ETH at 0.020062 gwei
+  markets          1
+    $SAI  token 0xC4b5eA97bd4e3f8Bc047fFCc74Ca9c2B6b426cb3  curve 0x3F5F33e4042f6ee127b4e6bef9ceA7846763Da50
+      fees bps: depth 10 · creator 70 · buyback 10 · protocol 10
   factory 0.11.0  0xE17f1027FC5f294327D701829baeD9d6519e922C
-  keccak           0xcbb89e32ae973400723287f16f32e87f039efcef1c1f814c5805bd1a6fe3add8  ok
     $WOMBO  token 0x84737C90Ef1D4318b4835cdC27e3F0989f4831d4  curve 0xB71A0bAfF60795DEde0C7f89F6AD095f7186C712
+      swaps 5
   verdict: every check passed
-```
 
-`17/17` is the 16 reserved tickers plus a lower-case spelling, which has to be refused too. Each
-line is checked against `src/chains.ts`, and the exit code is non-zero on any mismatch.
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#what-the-probe-checks-and-why-each-check-exists)
-explains what each check catches.
-
-## What the contracts guarantee an agent
-
-Opening a market usually takes capital, trust and a promise. Someone has to seed a liquidity pool.
-Someone holds a key that can change fees or upgrade the contract. And the creator is paid in
-supply, which is then sold into the first buyers. An agent can supply none of those: it has no
-pool to fund, no way to trust a key it cannot audit, and no reason to be paid in something that can
-be dumped. ADEXTO removes all three at the contract level, so none of it depends on anyone behaving
-well.
-
-| Usual launch | ADEXTO on Arbitrum |
-| --- | --- |
-| Liquidity must be deposited before anyone can trade | The curve opens against a **virtual reserve** that is never deposited. Tradable from the next transaction |
-| A key can change fees, pause, or upgrade | Every fee leg is `immutable`. **No owner, no proxy, no pause.** A different rate means a new factory at a new address, which anyone can see |
-| The market "graduates" to a pool, a step where liquidity can be moved | **No graduation.** The curve is the permanent venue, and it has no withdraw function |
-| The creator holds an allocation | The creator holds **zero**. 100% of supply is loaded into the curve at launch, and the factory then requires its own balance to be exactly `0`. The creator earns **0.70% of every trade** in ETH instead |
-| A bot takes the opening in its first block | For **180 seconds** no wallet may hold more than 1% of supply, checked on the receiving wallet's balance, so splitting a buy across transactions does not get around it |
-| Nothing supports the price | 0.10% of every trade stays in the curve, so the **floor price only rises**, and 0.10% funds a **buyback-and-burn** that anyone may trigger |
-| Anyone can launch `$USDC` or copy a live ticker | 16 tickers, including `ETH`, `USDC`, `ARB` and every live market's, are **reserved in the constructor**, permanently and case-insensitively. Robinhood Chain reserves its tokenized stocks too |
-
-Arbitrum is what makes the per-trade model practical. An agent is paid from flow, not from
-allocation, and machine buyers trade in small amounts, so small trades have to be worth making. At
-0.02 gwei they are.
-
-## Security evidence
-
-Stated as numbers, with where to check each one.
-
-- **No privileged role exists to compromise.** The ownership and upgrade surface is empty by
-  construction, not by policy. [What nobody can do, including us](docs/ARCHITECTURE.md#what-nobody-can-do-including-us).
-- **55 Foundry tests, 0 failing**, across 5 suites, including fuzzing at 4,096 runs per property
-  and invariants at 512 runs × 64 random actions. Among them: the curve stays solvent, the floor
-  never falls, the creator never holds tokens, a buy-then-sell round trip is never profitable,
-  protocol fees only ever reach the treasury, and no wallet passes 1% of supply during the launch
-  window. [`test/`](https://github.com/0xcuy/adexto/tree/main/test)
-- **Echidna, 6 of 6 properties passing** over 50,093 calls, the launch-window limit among them.
-- **Static analysis published with its triage.** Slither reports 39 findings, none High. Aderyn
-  reports one High kind in 4 instances, each triaged with the reason it is not exploitable (for
-  example, the registry call compiles to STATICCALL).
-  [adexto.xyz/security](https://adexto.xyz/security)
-- **One compiler, no known bugs.** Every deployed contract is built with solc 0.8.37, which has no
-  entry in the Solidity bug list, with the EVM version pinned to `cancun`.
-- **Review scope written for an auditor:** 701 SLOC, plus ranked questions we cannot settle
-  ourselves. [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md)
-- **No third-party audit yet**, and nothing on the site claims one.
-  Vulnerabilities go through [private reporting](https://github.com/0xcuy/adexto/security/advisories/new).
-
-## Built for Arbitrum, measured on Arbitrum
-
-**`block.number` is Ethereum's clock on Arbitrum, so v1 counts seconds.** Inside a contract on
-Nitro, `block.number` tracks the parent chain, not the L2 head. The probe shows both: head block
-510,487,237, and `block.number` 26,093,503. The `0.11.0` token counted its anti-sniper window in
-five blocks, so on Arbitrum One it lasted about a minute of Ethereum blocks while the same
-constant gave about 10 seconds on Base and 2 on Monad. It is readable on `$WOMBO`: the token records
-`launchBlock` 25,987,776, while its launch transaction is in Arbitrum block 505,650,908. ADEXTO v1
-records `launchTime` and measures its window with `block.timestamp`, so it is 180 seconds on every
-chain. The buyback cooldown uses `block.timestamp` too, so it is one hour everywhere.
-
-**Cost is measured, not assumed.** Launch simulations and the factory's own deployment receipt
-(5,197,955 gas) are read from Arbitrum One. `eth_estimateGas` there already includes the cost of
-posting data to Ethereum.
-
-**Reads survive public endpoints.** A rate limit inside a JSON-RPC batch comes back as HTTP 200
-with an error per entry, and ethers turns that into `missing revert data`, a message that blames
-the contract. Every read here is one call per request.
-
-Details and evidence: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#arbitrum-nitro-specifics).
-
-## How an agent gets bought
-
-A buyer needs no ETH on Arbitrum, no bridge and no account. An agent does it in four MCP calls to
-`https://adexto.xyz/api/mcp`, and signs the payment with its own wallet:
-
-1. `list_markets` or `get_market`: find the market, read from the same registry the site uses.
-2. `quote_buy`: the price in USDC and the tokens it delivers, without paying.
-3. `buy_token` without a payment: returns the HTTP 402 challenge, which names the asset, amount,
-   payee and deadline.
-4. `buy_token` with `xPayment`: the agent's own EIP-3009 `transferWithAuthorization` for USDC on
-   Base. The token arrives on Arbitrum One at the address that signed.
-
-The same challenge over plain HTTP, for a client without MCP:
-
-```
-GET https://x402.adexto.xyz/v1/x402/buy/wombo   ->  402 Payment Required
-  pay      0.10 USDC on Base (EIP-3009 transferWithAuthorization)
-  deliver  ≈ 21,568 $WOMBO on Arbitrum One, bought on the curve from 0.000036 ETH of inventory
-  to       the address that signed the payment
-```
-
-**Delivery happens before the charge.** The token is bought on Arbitrum first, and the USDC
-authorisation is settled only once that buy has succeeded. A failed delivery therefore costs the
-protocol and never the buyer. A request that cannot be served is refused while the buyer's
-authorisation is still unspent. The first delivery on Arbitrum is
-[`0x45d85fb0…10bc4b14`](https://arbiscan.io/tx/0x45d85fb0a6eb24479db156487151ecf6bcdc4a3cd7464203d30d66cb10bc4b14).
-
-One tool is different, and says so in its own description. `pay_and_buy` completes a purchase for
-a model that cannot sign, using the operator's wallet on the server rather than the agent's. It
-needs a key and is hard-capped at 0.20 USDC to our own treasury, so an agent hijacked by prompt
-injection can do no more than that. `buy_token` is the path where the agent pays from funds it
-controls. Integration reference: [adexto.xyz/x402](https://adexto.xyz/x402).
-
-On the other side of the trade, the market's own agent identity is checked when the market is
-opened: the factory calls `ownerOf(agentId)` on the ERC-8004 registry and refuses the binding
-unless the launcher owns that agent. Binding is opt-in, so a market opened without one reads
-`agentIdOf` 0, as `$WOMBO` does.
-
-## Robinhood Chain
-
-ADEXTO v1 is live on Robinhood Chain mainnet, with the same runtime bytecode as Arbitrum One. That
-was possible unmodified because the ERC-8004 registry the factory hard-codes as a `constant`
-exists at the same address there, with the same implementation Arbitrum One uses.
-
-| | |
-| --- | --- |
-| **AdextoFactory 1.0.0** (ADEXTO v1) | [`0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D`](https://robinhoodchain.blockscout.com/address/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D), deployed in block 76,864,198 ([tx](https://robinhoodchain.blockscout.com/tx/0x2a8f8a0c8ef6ff11ec907e13979788c927bd810b8efb8d250895be54705334c9)) |
-| Source | **Exact match on [Sourcify](https://repo.sourcify.dev/4663/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D)**, from the same commit and build as Arbitrum One |
-| Reserved tickers | **212**: the base 16, `USDG`, and the 195 tokenized stocks listed as active on chain 4663 when the factory was deployed |
-| Launch cost | 3,280,921 gas, about 0.000072 ETH at 0.022 gwei, simulated on 2026-10-01 |
-| Markets | None yet |
-
-Robinhood Chain carries tokenized equities, which makes any permissionless launcher an
-impersonation risk: nothing else on chain stops a stranger from opening a market under a stock's
-ticker. The factory answers that without an admin key. Its constructor reserved every equity
-ticker trading there at deployment, one-letter and common-word tickers such as `P` and `ON`
-included, and nothing can release them. A stock listed after that date is not covered, and a
-later factory would have to reserve it. Reserved tickers live in storage, so the runtime bytecode
-stays byte-identical. The full list is
-[`scripts/reserved-symbols.json`](https://github.com/0xcuy/adexto/blob/main/scripts/reserved-symbols.json).
-
-```
 === Robinhood Chain · chainId 4663 ===
-  eth_chainId      4663  ok
   factory 1.0.0 (current)  0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D
   keccak           0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4  ok
-  source           0x0e70cb93fbb10b66109cc71d547329cb48b4c3953791c2c4609519ff92221d62  ok
-  deployed         block 76864198, status 1, 10270031 gas  ok
   reserved         25/25 tickers unlaunchable  ok
-  launch sim       ok as 0x5f8E…09F3 ($PRB8164), no native attached
+  markets          1
+    $SAI  token 0x4C63223B883B3096bC1Bd24087b56951D1dAC82d  curve 0x1b9d0221e2C7447845326A4a8C6B0f35c329500B
   verdict: every check passed
 ```
 
-`25/25` is the base 16, a lower-case spelling, and a sample of eight Robinhood Chain additions
-(`USDG`, `AAPL`, `TSLA`, `NVDA`, `SPY`, `COIN`, `P`, `ON`). The testnet has no ERC-8004 registry,
-so agent-bound launches would revert there; that is why the deployment is on mainnet.
+`17/17` is the 16 reserved tickers plus a lower-case spelling, which has to be refused too, and `25/25` adds a
+sample of eight Robinhood Chain stocks (`USDG`, `AAPL`, `TSLA`, `NVDA`, `SPY`, `COIN`, `P`, `ON`). Every line is
+checked against `src/chains.ts`, and the exit code is non-zero on any mismatch. What each check catches:
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#what-the-probe-checks-and-why-each-check-exists).
 
-## Status
+## 🛡️ What the contracts guarantee an agent
 
-| Piece | State |
-| --- | --- |
-| ADEXTO v1 (AdextoFactory `1.0.0`) on Arbitrum One | **Live.** Every probe check passes |
-| ADEXTO v1 on Robinhood Chain | **Live.** Every probe check passes, 212 tickers reserved. No market yet |
-| Launch from the web studio | **Live** at [adexto.xyz/studio](https://adexto.xyz/studio), Arbitrum One and Robinhood Chain both selectable |
-| `$WOMBO` on Arbitrum One | **Live** on `0.11.0`. 5 fills, all through the cross-chain gateway |
-| Buy with USDC on Base, receive on Arbitrum One | **Live** |
-| Buy with USDC on Base, receive on Robinhood Chain | **Not yet.** The gateway has no delivery inventory there |
-| Agents discover, quote and buy over MCP | **Live.** `buy_token` takes the agent's own signature; the operator-signed `pay_and_buy` is key-gated and capped |
-| Agent-bound launch | **Live in the factory.** `ownerOf(agentId)` is checked at launch. No agent-bound market on Arbitrum One yet |
-| Agent opens a market through MCP | **Next.** A direct contract call works today |
-| Creator earnings, claimed in one transaction per chain | **Live** at [adexto.xyz/creator](https://adexto.xyz/creator) |
-| Source on Sourcify | **Exact match** for ADEXTO v1 on [Arbitrum One](https://repo.sourcify.dev/42161/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E) and [Robinhood Chain](https://repo.sourcify.dev/4663/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D), for AdextoFactory [`0.11.0`](https://repo.sourcify.dev/42161/0xE17f1027FC5f294327D701829baeD9d6519e922C) (built from commit [`98ffb1c`](https://github.com/0xcuy/adexto/commit/98ffb1c900f4c9e14d035e279ef095e25ac8e4ba)) and for the `$WOMBO` [curve](https://repo.sourcify.dev/42161/0xB71A0bAfF60795DEde0C7f89F6AD095f7186C712) and [token](https://repo.sourcify.dev/42161/0x84737C90Ef1D4318b4835cdC27e3F0989f4831d4) |
-| Source on Arbiscan and robin.etherscan.io | **Submitted, waiting in Etherscan's queue.** The same standard-JSON input already reads verified on Basescan and Monadscan |
-| Third-party audit | **Not yet.** Scope written, 701 SLOC |
+| A usual launch | ADEXTO on Arbitrum |
+|---|---|
+| Liquidity is deposited before anyone can trade | The curve opens against a **virtual reserve** that is never deposited. Tradable from the next transaction |
+| A key can change fees, pause or upgrade | Every fee leg is `immutable`. **No owner, no proxy, no pause.** A different rate means a new factory at a new address |
+| The market graduates to a pool, where liquidity can be moved | **No graduation.** The curve is the permanent venue, and it has no withdraw function |
+| The creator holds an allocation | The creator holds **zero**: 100% of supply goes into the curve, and the factory then requires its own balance to be exactly `0` |
+| A bot takes the opening block | For **180 seconds** no wallet may hold more than 1% of supply, checked on the receiving balance, so splitting a buy does not get around it |
+| Nothing supports the price | 0.10% of every trade stays in the curve, so the **floor only rises**, and 0.10% funds a **buyback-and-burn** anyone may trigger |
+| Anyone can launch `$USDC` or copy a live ticker | 16 tickers, `ETH`, `USDC` and `ARB` among them, are **reserved in the constructor**, permanently and case-insensitively. Robinhood Chain reserves its tokenized stocks too |
 
-## Roadmap
+## 🔬 Security evidence
 
-Each milestone ends in something the chain or this repository can show.
+- **No privileged role to compromise.** The ownership and upgrade surface is empty by construction, not by
+  policy. [What nobody can do, including us](docs/ARCHITECTURE.md#what-nobody-can-do-including-us).
+- **80 Foundry tests, 0 failing**, across 6 suites: fuzzing at 4,096 runs per property and invariants at
+  512 runs × 64 random actions. The curve stays solvent, the floor never falls, the creator never holds tokens,
+  a round trip is never profitable, protocol fees only reach the treasury, and no wallet passes 1% of supply
+  inside the launch window. [`test/`](https://github.com/0xcuy/adexto/tree/main/test)
+- **Echidna, 6 of 6 properties passing** over 50,183 calls, the launch-window limit among them.
+- **Static analysis, published with its triage.** Slither reports 43 findings and **0 High on the launch
+  path**; its one High is in the stake hub and is explained there. Aderyn reports one High kind in 5 instances,
+  each with the reason it is not exploitable. [adexto.xyz/security](https://adexto.xyz/security)
+- **One compiler, no known bugs:** solc 0.8.37, EVM version pinned to `cancun`.
+- **Review scope written for an auditor:** 825 SLOC and the questions we cannot settle ourselves.
+  [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md)
+- **No third-party audit yet**, and nothing on the site claims one. Report vulnerabilities through
+  [private reporting](https://github.com/0xcuy/adexto/security/advisories/new).
 
-1. **An MCP tool to open a market.** It returns an unsigned `deployTrinity` transaction for the
-   agent to sign with its own key, so nobody else's key is ever held. Done when an agent opens an
-   agent-bound market on Arbitrum One through MCP alone.
-2. **The first markets on v1**, on Arbitrum One and Robinhood Chain, opened from the production
-   studio and listed in `npm run probe` with their fills.
-3. **Explorer-verified source everywhere.** Sourcify already has exact matches. Arbiscan and
-   robin.etherscan.io complete it, so reading the source never depends on running the probe.
-4. **Indexed history for v1.** The subgraph manifest gains the v1 factories on Arbitrum One; until
-   then the site reads v1 markets from RPC logs.
-5. **External review** of the 701-SLOC scope in
-   [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md).
+## ⚙️ Built for Arbitrum, measured on Arbitrum
 
-## Contract call traps
+**`block.number` is Ethereum's clock on Arbitrum, so v1 counts seconds.** Inside a contract on Nitro,
+`block.number` tracks the parent chain, not the L2 head: the probe shows Arbitrum block 510 million against
+`block.number` 26 million. The `0.11.0` token counted its anti-sniper window in five blocks, which on Arbitrum
+One lasted about a minute of Ethereum blocks while the same constant gave about 10 seconds on Base and 2 on
+Monad. ADEXTO v1 records `launchTime` and uses `block.timestamp`, so its window is 180 seconds on every chain,
+and so is the one-hour buyback cooldown.
 
-For an agent, or anyone, calling the factory directly. Each one reverts if ignored.
+**Cost is measured, not assumed.** Launch simulations and the factory's own deployment receipt are read from
+Arbitrum One, where `eth_estimateGas` already includes the cost of posting data to Ethereum.
 
-- `initialSupply` is in **whole tokens**, not wei. `MAX_SUPPLY` is `1e12` whole tokens, so
-  `parseEther(…)` fails with `Factory: bad supply`.
-- `agentIdentity` **must not be the zero address**, even when `bindAgent` is `false`
-  (`Factory: zero agent`).
+**Reads survive public endpoints.** A rate limit inside a JSON-RPC batch comes back as HTTP 200 with an error
+per entry, which ethers reports as `missing revert data`, blaming the contract. Every read here is one call per
+request. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#arbitrum-nitro-specifics).
+
+## 📋 Status
+
+| | Piece | State |
+|:-:|---|---|
+| ✅ | ADEXTO v1 on Arbitrum One and Robinhood Chain | Live. Every probe check passes, Sourcify exact match on both |
+| ✅ | SAi Arbitrum and SAi Robin | Live on v1, each launched by an agent wallet with its own ERC-8004 identity |
+| ✅ | $WOMBO on `0.11.0` | Live. Five fills, all through the cross-chain gateway |
+| ✅ | Buy with USDC on Base, receive on Arbitrum One | Live, $SAI and $WOMBO both delivered |
+| 🟡 | Buy with USDC on Base, receive on Robinhood Chain | Quoted and in stock. No paid delivery yet |
+| ✅ | MCP server for agents | Ten tools. `buy_token` takes the agent's own signature; `pay_and_buy` is key-gated and capped |
+| ✅ | Staking on every market, and `ask_agent` | $SAI's own stakes, and a stake hub per chain for everything else |
+| ✅ | Agent Compute keys | Tiered on $SAI, funded by trading on hub markets |
+| ✅ | Launch from the web Studio | [adexto.xyz/studio](https://adexto.xyz/studio), both chains selectable |
+| ✅ | Creator earnings, claimed in one transaction per chain | [adexto.xyz/creator](https://adexto.xyz/creator) |
+| ⏭️ | An MCP tool that opens a market | Next. A direct contract call works today |
+| ⏭️ | Indexed history for v1 | Next. The site reads v1 markets from RPC logs until the subgraph follows the v1 factory |
+| ❌ | Third-party audit | Not yet. Scope written, 825 SLOC |
+
+## 🗺️ Roadmap
+
+Each step ends in something the chain or this repository can show.
+
+1. **An MCP tool to open a market.** It returns an unsigned `deployTrinity` transaction for the agent to sign
+   with its own key, so nobody else's key is ever held. Done when an agent opens an agent-bound market on
+   Arbitrum One through MCP alone.
+2. **The first paid delivery on Robinhood Chain**, through the same gateway and the same delivery-first order.
+3. **Indexed history for v1.** The subgraph manifest gains the v1 factory on Arbitrum One.
+4. **External review** of the 825-SLOC scope in [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md).
+
+<details>
+<summary><b>🧩 Contract call traps</b>, for an agent calling the factory directly</summary>
+
+<br>
+
+Each of these reverts if ignored.
+
+- `initialSupply` is in **whole tokens**, not wei. `MAX_SUPPLY` is `1e12` whole tokens, so `parseEther(…)` fails
+  with `Factory: bad supply`.
+- `agentIdentity` **must not be the zero address**, even when `bindAgent` is `false` (`Factory: zero agent`).
 - `agentId` must be `0` unless `bindAgent` is set (`Factory: agentId set without bindAgent`).
-- `creatorShareBps + treasuryShareBps + 10 <= swapFeeBps <= 500`. The protocol leg is inside the
-  total, not added to it.
+- `creatorShareBps + treasuryShareBps + 10 <= swapFeeBps <= 500`. The protocol leg is inside the total, not added
+  to it.
 - Symbol 1–12 bytes, name 1–64 bytes, symbol unique per factory, compared upper-cased.
 - `projectAt(i)` returns the **token** first and the curve second.
-- For 180 seconds after launch, a buy or transfer that would leave the receiving wallet above 1% of
-  supply reverts with `Anti-sniper: wallet limit during launch window`.
+- For 180 seconds after launch, a buy or transfer that would leave the receiving wallet above 1% of supply
+  reverts with `Anti-sniper: wallet limit during launch window`.
 
-## Repository boundary
+</details>
+
+## 🗂️ What lives where
 
 ```mermaid
 flowchart LR
@@ -308,13 +349,13 @@ flowchart LR
         AR["docs/ARCHITECTURE.md"]
     end
     subgraph main["0xcuy/adexto"]
-        SOL["contracts/<br/>factory · curve · token"]
+        SOL["contracts/<br/>factory · curve · token · stakes"]
         TST["test/ · Echidna · security scan"]
         APP["web app · x402 gateway · MCP"]
     end
     subgraph arb["Arbitrum One · Robinhood Chain"]
         F1["AdextoFactory 1.0.0"]
-        MK["markets"]
+        MK["markets · stakes"]
     end
     SOL -->|"--via-ir build of 71b5adf"| F1
     CH --> PR
@@ -323,9 +364,16 @@ flowchart LR
     APP --> MK
 ```
 
-The probe reads the chain and never the other repository. A claim here is true only if the chain
-agrees.
+This repository holds the chain registry, the read-only probe and the Arbitrum engineering notes. The contracts,
+their tests and the web app live in [`0xcuy/adexto`](https://github.com/0xcuy/adexto) and are not duplicated here.
+The probe reads the chain and never the other repository, so a claim here is true only if the chain agrees.
 
-## License
+---
 
-[MIT](LICENSE)
+<p align="center">
+  <a href="https://adexto.xyz">adexto.xyz</a> &nbsp;·&nbsp;
+  <a href="https://x.com/adexto_">X</a> &nbsp;·&nbsp;
+  <a href="https://t.me/adexto">Telegram</a> &nbsp;·&nbsp;
+  <a href="LICENSE">MIT license</a> &nbsp;·&nbsp;
+  <a href="#readme-top">Back to top ↑</a>
+</p>

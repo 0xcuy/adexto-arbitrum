@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-labelledby="t d">
+  <title id="t">ADEXTO on Arbitrum</title>
+  <desc id="d">Markets for AI agents on Arbitrum One and Robinhood Chain. One gas-only transaction, no deposit, no admin key.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070D1A"/>
+      <stop offset="0.55" stop-color="#0F2240"/>
+      <stop offset="1" stop-color="#173B6B"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.85" cy="0.12" r="0.55">
+      <stop offset="0" stop-color="#12AAFF" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#12AAFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.04" cy="1" r="0.5">
+      <stop offset="0" stop-color="#00C805" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#00C805" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#28A0F0"/>
+      <stop offset="1" stop-color="#9DCCED"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <clipPath id="frame">
+      <rect width="1280" height="400" rx="28"/>
+    </clipPath>
+    <mask id="adx-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <g transform="rotate(-14 256 286)"><path d="M76,286 a180,66 0 1 0 360,0 a180,66 0 1 0 -360,0 Z M99,276 a169,55 0 1 0 338,0 a169,55 0 1 0 -338,0 Z" fill="none" stroke="#000" stroke-width="20" stroke-linejoin="round"/></g>
+      <circle cx="388" cy="302" r="34" fill="none" stroke="#000" stroke-width="20"/>
+    </mask>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="400" fill="url(#bg)"/>
+    <rect width="1280" height="400" fill="url(#grid)"/>
+    <rect width="1280" height="400" fill="url(#glowA)"/>
+    <rect width="1280" height="400" fill="url(#glowB)"/>
+
+    <!-- ADEXTO mark -->
+    <svg x="72" y="78" width="96" height="96" viewBox="74 77 364 364">
+      <g fill="#FFFFFF">
+        <path d="M256,104 L438,414 L350,414 L256,214 L162,414 L74,414 Z" mask="url(#adx-cut)"/>
+        <g transform="rotate(-14 256 286)"><path d="M76,286 a180,66 0 1 0 360,0 a180,66 0 1 0 -360,0 Z M99,276 a169,55 0 1 0 338,0 a169,55 0 1 0 -338,0 Z" fill-rule="evenodd"/></g>
+        <circle cx="388" cy="302" r="34"/>
+      </g>
+    </svg>
+
+    <g font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+      <text x="190" y="150" font-size="68" font-weight="800" letter-spacing="3" fill="#FFFFFF">ADEXTO</text>
+
+      <!-- Arbitrum mark, then the chain name -->
+      <svg x="190" y="169" width="34" height="34" viewBox="0 0 24 24">
+        <path fill="#213147" d="M4.515 8.471v7.056c0 .45.245.867.64 1.092l6.205 3.529a1.3 1.3 0 0 0 1.28 0l6.203-3.53c.396-.224.64-.64.64-1.09V8.47c0-.45-.244-.867-.64-1.091L12.64 3.85a1.3 1.3 0 0 0-1.28 0L5.155 7.38a1.25 1.25 0 0 0-.639 1.091"/>
+        <path fill="#12AAFF" d="m13.353 13.368-.885 2.39a.3.3 0 0 0 0 .205l1.523 4.112 1.76-1.001-2.113-5.706a.152.152 0 0 0-.285 0m1.774-4.019a.152.152 0 0 0-.285 0l-.885 2.39a.3.3 0 0 0 0 .205l2.494 6.732 1.761-1.001z"/>
+        <path fill="#9DCCED" d="M11.998 4.115a.3.3 0 0 1 .126.033l6.715 3.818a.25.25 0 0 1 .126.214v7.635c0 .089-.048.17-.126.214l-6.715 3.819a.25.25 0 0 1-.126.032.3.3 0 0 1-.125-.032l-6.715-3.815a.25.25 0 0 1-.126-.215V8.182c0-.089.048-.17.126-.215l6.715-3.818a.26.26 0 0 1 .125-.034m0-1.115c-.238 0-.478.06-.692.183L4.593 7A1.36 1.36 0 0 0 3.9 8.182v7.635c0 .487.264.938.693 1.181l6.714 3.819a1.41 1.41 0 0 0 1.386 0l6.714-3.818a1.36 1.36 0 0 0 .693-1.182V8.182A1.36 1.36 0 0 0 19.407 7l-6.716-3.817A1.4 1.4 0 0 0 11.998 3"/>
+        <path fill="#213147" d="m7.559 18.685.617-1.666 1.244 1.018-1.163 1.046z"/>
+        <path fill="#FFFFFF" d="M11.433 7.635H9.731a.3.3 0 0 0-.285.197l-3.649 9.852 1.761 1.001 4.018-10.849a.15.15 0 0 0-.143-.2m2.979-.001h-1.703a.3.3 0 0 0-.284.197l-4.167 11.25 1.761 1 4.535-12.246a.15.15 0 0 0-.142-.2"/>
+      </svg>
+      <text x="234" y="196" font-size="34" font-weight="600" fill="#BFE3FF">on Arbitrum</text>
+
+      <text x="72" y="262" font-size="32" font-weight="700" fill="#FFFFFF">Markets for AI agents</text>
+      <text x="72" y="298" font-size="19" font-weight="500" fill="#CFE6FA">Arbitrum One · Robinhood Chain · one bytecode, no admin key</text>
+
+      <!-- chips -->
+      <g font-size="15" font-weight="600" fill="#E6F4FF">
+        <rect x="72" y="326" width="168" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.08" stroke="#9DCCED" stroke-opacity="0.45"/>
+        <text x="156" y="348" text-anchor="middle">ERC-8004 identity</text>
+        <rect x="252" y="326" width="124" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.08" stroke="#9DCCED" stroke-opacity="0.45"/>
+        <text x="314" y="348" text-anchor="middle">MCP · x402</text>
+        <rect x="388" y="326" width="196" height="34" rx="17" fill="#00C805" fill-opacity="0.16" stroke="#4ADE80" stroke-opacity="0.55"/>
+        <text x="486" y="348" text-anchor="middle">212 tickers reserved</text>
+        <rect x="596" y="326" width="190" height="34" rx="17" fill="#16A34A" fill-opacity="0.22" stroke="#4ADE80" stroke-opacity="0.6"/>
+        <text x="691" y="348" text-anchor="middle">Sourcify exact match</text>
+      </g>
+    </g>
+
+    <!-- two chains, one curve -->
+    <g>
+      <rect x="812" y="60" width="400" height="280" rx="20" fill="#FFFFFF" fill-opacity="0.045" stroke="#28A0F0" stroke-opacity="0.45"/>
+      <svg x="836" y="78" width="22" height="22" viewBox="0 0 24 24">
+        <path fill="#9DCCED" d="M11.998 4.115a.3.3 0 0 1 .126.033l6.715 3.818a.25.25 0 0 1 .126.214v7.635c0 .089-.048.17-.126.214l-6.715 3.819a.25.25 0 0 1-.126.032.3.3 0 0 1-.125-.032l-6.715-3.815a.25.25 0 0 1-.126-.215V8.182c0-.089.048-.17.126-.215l6.715-3.818a.26.26 0 0 1 .125-.034m0-1.115c-.238 0-.478.06-.692.183L4.593 7A1.36 1.36 0 0 0 3.9 8.182v7.635c0 .487.264.938.693 1.181l6.714 3.819a1.41 1.41 0 0 0 1.386 0l6.714-3.818a1.36 1.36 0 0 0 .693-1.182V8.182A1.36 1.36 0 0 0 19.407 7l-6.716-3.817A1.4 1.4 0 0 0 11.998 3"/>
+        <path fill="#12AAFF" d="m13.353 13.368-.885 2.39a.3.3 0 0 0 0 .205l1.523 4.112 1.76-1.001-2.113-5.706a.152.152 0 0 0-.285 0m1.774-4.019a.152.152 0 0 0-.285 0l-.885 2.39a.3.3 0 0 0 0 .205l2.494 6.732 1.761-1.001z"/>
+        <path fill="#FFFFFF" d="M11.433 7.635H9.731a.3.3 0 0 0-.285.197l-3.649 9.852 1.761 1.001 4.018-10.849a.15.15 0 0 0-.143-.2m2.979-.001h-1.703a.3.3 0 0 0-.284.197l-4.167 11.25 1.761 1 4.535-12.246a.15.15 0 0 0-.142-.2"/>
+      </svg>
+      <svg x="1010" y="78" width="22" height="22" viewBox="0 0 24 24">
+        <path fill="#00C805" d="M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852"/>
+      </svg>
+      <g font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600">
+        <text x="866" y="95" fill="#BFE3FF">Arbitrum One</text>
+        <text x="1040" y="95" fill="#86EFAC">Robinhood Chain</text>
+        <text x="1188" y="324" font-size="13" font-weight="500" fill="#BFE3FF" fill-opacity="0.8" text-anchor="end">supply sold →</text>
+      </g>
+      <path d="M842 300 H1188 M842 300 V118" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.5" fill="none"/>
+      <path d="M846 296 Q1010 292 1184 268" stroke="#4ADE80" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="6 6" fill="none"/>
+      <text x="1184" y="258" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#86EFAC" text-anchor="end">floor only rises</text>
+      <path d="M846 294 C 970 290, 1080 246, 1182 124" stroke="url(#curve)" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.35" filter="url(#soft)"/>
+      <path d="M846 294 C 970 290, 1080 246, 1182 124" stroke="url(#curve)" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <g fill="#FFFFFF">
+        <circle cx="900" cy="290" r="5"/>
+        <circle cx="972" cy="282" r="5"/>
+        <circle cx="1040" cy="262" r="5"/>
+        <circle cx="1098" cy="227" r="5"/>
+        <circle cx="1146" cy="177" r="6"/>
+      </g>
+      <g fill="#9DCCED" opacity="0.5" filter="url(#soft)">
+        <circle cx="1146" cy="177" r="12"/>
+      </g>
+    </g>
+  </g>
+</svg>

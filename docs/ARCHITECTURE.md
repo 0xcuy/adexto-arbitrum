@@ -38,6 +38,12 @@ Sourcify reports an exact match, creation and runtime, for v1 on
 [Robinhood Chain](https://repo.sourcify.dev/4663/0x8e63e117E71A80Cfc10fDF375F079e2e29cd7D7D), and
 for the [`0.11.0` factory](https://repo.sourcify.dev/42161/0xE17f1027FC5f294327D701829baeD9d6519e922C).
 
+Two more contracts hold stakes, and a launch never calls either. [`AdextoAgentStake`](https://github.com/0xcuy/adexto/blob/f8328ab43375c8a785ccf86fb4dfe39c83c2986f/contracts/AdextoAgentStake.sol)
+is bound to one token: `$SAI` has one on each chain. [`AdextoStakeHub`](https://github.com/0xcuy/adexto/blob/f8328ab43375c8a785ccf86fb4dfe39c83c2986f/contracts/AdextoStakeHub.sol)
+is one per chain for every other market. It accepts a token when one of its factories returns a curve for it
+from `curveOf`, so a new launch is stakeable from its first block with nothing deployed. Neither has an owner,
+and both are exact matches on Sourcify.
+
 ## One launch, one transaction
 
 ```mermaid
@@ -228,7 +234,7 @@ Robinhood's own asset list, alongside the base 16.
   is written once, in the constructor; covering later listings takes a later factory.
 - **No third-party audit yet.** Eight analysers and fuzzers run on every change, and their output
   is published with each finding triaged at [adexto.xyz/security](https://adexto.xyz/security).
-  The review scope, 701 SLOC, is written up in
+  The review scope, 825 SLOC with the stake contracts, is written up in
   [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md).
 
 ---
