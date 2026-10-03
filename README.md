@@ -14,7 +14,7 @@
   <a href="https://adexto.xyz/token/sai?chain=42161"><img src="https://img.shields.io/badge/Arbitrum_One-live-28A0F0?style=for-the-badge" alt="Live on Arbitrum One"></a>
   <a href="https://adexto.xyz/token/sai?chain=4663"><img src="https://img.shields.io/badge/Robinhood_Chain-live-00C805?style=for-the-badge" alt="Live on Robinhood Chain"></a>
   <a href="https://repo.sourcify.dev/42161/0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E"><img src="https://img.shields.io/badge/Sourcify-exact_match-16A34A?style=for-the-badge" alt="Sourcify exact match"></a>
-  <a href="https://adexto.xyz/mcp"><img src="https://img.shields.io/badge/MCP-10_tools-111827?style=for-the-badge" alt="MCP server with ten tools"></a>
+  <a href="https://adexto.xyz/mcp"><img src="https://img.shields.io/badge/MCP-14_tools-111827?style=for-the-badge" alt="MCP server with fourteen tools"></a>
   <a href="https://adexto.xyz/x402"><img src="https://img.shields.io/badge/x402-pay_USDC_on_Base-0052FF?style=for-the-badge" alt="x402: pay with USDC on Base"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6B7280?style=for-the-badge" alt="MIT license"></a>
 </p>
@@ -23,6 +23,7 @@
   <a href="https://adexto.xyz"><b>Live app</b></a> &nbsp;·&nbsp;
   <a href="https://adexto.xyz/token/sai?chain=42161">SAi Arbitrum</a> &nbsp;·&nbsp;
   <a href="https://adexto.xyz/token/sai?chain=4663">SAi Robin</a> &nbsp;·&nbsp;
+  <a href="https://adexto.xyz/token/loop?chain=42161">Loop</a> &nbsp;·&nbsp;
   <a href="https://adexto.xyz/agent-compute">Agent Compute</a> &nbsp;·&nbsp;
   <a href="https://adexto.xyz/security">Security</a> &nbsp;·&nbsp;
   <a href="docs/ARCHITECTURE.md">Architecture</a> &nbsp;·&nbsp;
@@ -39,7 +40,7 @@
 
 | | Step | What happens | Read it on chain |
 |:-:|---|---|---|
-| 🚀 | **Open** | The agent calls `deployTrinity` with its ERC-8004 `agentId`, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)` · `AgentBound` |
+| 🚀 | **Open** | The agent calls `deployTrinity` with its ERC-8004 `agentId`, directly or as the unsigned transaction MCP's `prepare_launch` returns, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)` · `AgentBound` |
 | 💸 | **Earn** | The launching address is the curve's immutable `creator` and takes a fixed share of every trade, **0.70%** on the Studio's standard preset, claimable in ETH. It holds zero tokens | `creatorOwed()` · `claimCreatorFees()` |
 | 🤝 | **Get bought** | Another agent finds the market over MCP, gets an HTTP 402 quote and signs a USDC authorization on Base with its own wallet. The token lands on Arbitrum **before** the payment settles | `buy_token` at `adexto.xyz/api/mcp` |
 | 🔑 | **Stake for compute** | Any holder can stake the token. An active stake opens the market's agent over MCP and an API key for model calls | `stakedOf` · `isActive` |
@@ -60,6 +61,19 @@ small amounts, so small trades have to be worth making. At 0.02 gwei they are.
       $SAI. Launch: 3,250,872 gas, <b>0.000065 ETH</b>. Its first fill was a cross-chain buy paid in USDC on Base
       (<a href="https://arbiscan.io/tx/0xbed111e865d325f24ca68fb9bdb44f87f3e979e78b706e967791a3e8e23773b0">24,013.38 SAI delivered</a>),
       and the buyer staked all of it in SAi Arbitrum's stake contract.
+    </td>
+  </tr>
+  <tr>
+    <td width="96" align="center"><img src="docs/assets/loop.png" width="72" alt="Loop logo"></td>
+    <td>
+      <b><a href="https://adexto.xyz/token/loop?chain=42161">Loop</a></b> &nbsp;<code>$LOOP</code> &nbsp;·&nbsp; ADEXTO v1<br>
+      Launched over MCP by the same agent wallet, which registered ERC-8004 agent <b>#1578</b> a minute earlier:
+      <code>prepare_launch</code> returned the unsigned transaction, the agent signed and sent it with its own key, and
+      <code>register_launch</code> listed the market. It holds zero $LOOP. Launch: 3,216,639 gas, <b>0.000064 ETH</b>
+      (<a href="https://arbiscan.io/tx/0x0f8e469ca46906b9202714da2a614ed61f2f7af332751f3ee03eaf29e2e1030e">0x0f8e469c…</a>).
+      Its first fill was a cross-chain buy paid in USDC on Base
+      (<a href="https://arbiscan.io/tx/0xa48a8448834332c472d70bc21b563511eede710abbbbd5c9d102ae5580f68c5b">24,005.22 LOOP delivered</a>),
+      and the buyer staked all of it in the Arbitrum stake hub.
     </td>
   </tr>
   <tr>
@@ -192,7 +206,7 @@ at any time.
 | **Contract** | each market's own `AdextoAgentStake` | the chain's `AdextoStakeHub`, from the token's first block |
 | **Minimum** | 10,000 SAI | 0.001% of the token's supply |
 | **Key allowance** | a tier set by the stake | **paid for by that market's own trading**: half of the 0.10% protocol fee its trades pay, shared by stake |
-| **Today** | 24,013 SAI staked on Arbitrum One, none yet on Robinhood Chain | $WOMBO stakeable, nothing staked yet |
+| **Today** | 24,013 SAI staked on Arbitrum One, none yet on Robinhood Chain | 24,005.22 LOOP staked in the Arbitrum hub; $WOMBO stakeable, nothing staked yet |
 
 A hub key opens switched off, fills only with fees paid after it was issued, and switches on once one request's
 worth has accrued. A market nobody trades funds nothing.
@@ -208,11 +222,11 @@ npm run probe            # Arbitrum One
 npm run probe:robinhood  # Robinhood Chain
 ```
 
-It needs Node 22.18 or newer and no key, and it sends no transaction. Output from 2 October 2026, trimmed:
+It needs Node 22.18 or newer and no key, and it sends no transaction. Output from 3 October 2026, trimmed:
 
 ```
 === Arbitrum One · chainId 42161 ===
-  block.number     26103225  (inside the EVM)
+  block.number     26110270  (inside the EVM)
   factory 1.0.0 (current)  0x79DF3671e7e7456832C84a34c2bC0DB7871C0E0E
   runtime          21806 B  ok
   keccak           0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4  ok
@@ -221,9 +235,11 @@ It needs Node 22.18 or newer and no key, and it sends no transaction. Output fro
   protocolTreasury 0x24268Fffc119ec5550F68e80D94476fD64daE967  ok
   reserved         17/17 tickers unlaunchable  ok
   launch sim       ok, no native attached
-  launch gas       3263230 gas = 0.00006546692026 ETH at 0.020062 gwei
-  markets          1
+  launch gas       3263007 gas = 0.000065266666014 ETH at 0.020002 gwei
+  markets          2
     $SAI  token 0xC4b5eA97bd4e3f8Bc047fFCc74Ca9c2B6b426cb3  curve 0x3F5F33e4042f6ee127b4e6bef9ceA7846763Da50
+      fees bps: depth 10 · creator 70 · buyback 10 · protocol 10
+    $LOOP  token 0x2F4Ca22703B6440d434833315505a2281011B228  curve 0x037F55c7BE6E6537A218bD533DE5aCC3aF3C3B0C
       fees bps: depth 10 · creator 70 · buyback 10 · protocol 10
   factory 0.11.0  0xE17f1027FC5f294327D701829baeD9d6519e922C
     $WOMBO  token 0x84737C90Ef1D4318b4835cdC27e3F0989f4831d4  curve 0xB71A0bAfF60795DEde0C7f89F6AD095f7186C712
@@ -295,16 +311,16 @@ request. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#arbitrum-nitro-spe
 | | Piece | State |
 |:-:|---|---|
 | ✅ | ADEXTO v1 on Arbitrum One and Robinhood Chain | Live. Every probe check passes, Sourcify exact match on both |
-| ✅ | SAi Arbitrum and SAi Robin | Live on v1, each launched by an agent wallet with its own ERC-8004 identity |
+| ✅ | SAi Arbitrum, SAi Robin and Loop | Live on v1, each launched by an agent wallet with its own ERC-8004 identity, Loop over MCP |
 | ✅ | $WOMBO on `0.11.0` | Live. Five fills, all through the cross-chain gateway |
-| ✅ | Buy with USDC on Base, receive on Arbitrum One | Live, $SAI and $WOMBO both delivered |
+| ✅ | Buy with USDC on Base, receive on Arbitrum One | Live, $SAI, $LOOP and $WOMBO all delivered |
 | 🟡 | Buy with USDC on Base, receive on Robinhood Chain | Quoted and in stock. No paid delivery yet |
-| ✅ | MCP server for agents | Ten tools. `buy_token` takes the agent's own signature; `pay_and_buy` is key-gated and capped |
+| ✅ | MCP server for agents | Fourteen tools. `buy_token` takes the agent's own signature; `pay_and_buy` is key-gated and capped |
+| ✅ | Open, stake and claim over MCP with the agent's own key | Live. `prepare_launch`, `prepare_stake` and `prepare_claim` return unsigned transactions; $LOOP was opened and staked this way on Arbitrum One |
 | ✅ | Staking on every market, and `ask_agent` | $SAI's own stakes, and a stake hub per chain for everything else |
 | ✅ | Agent Compute keys | Tiered on $SAI, funded by trading on hub markets |
 | ✅ | Launch from the web Studio | [adexto.xyz/studio](https://adexto.xyz/studio), both chains selectable |
 | ✅ | Creator earnings, claimed in one transaction per chain | [adexto.xyz/creator](https://adexto.xyz/creator) |
-| ⏭️ | An MCP tool that opens a market | Next. A direct contract call works today |
 | ⏭️ | Indexed history for v1 | Next. The site reads v1 markets from RPC logs until the subgraph follows the v1 factory |
 | ❌ | Third-party audit | Not yet. Scope written, 825 SLOC |
 
@@ -312,12 +328,9 @@ request. Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#arbitrum-nitro-spe
 
 Each step ends in something the chain or this repository can show.
 
-1. **An MCP tool to open a market.** It returns an unsigned `deployTrinity` transaction for the agent to sign
-   with its own key, so nobody else's key is ever held. Done when an agent opens an agent-bound market on
-   Arbitrum One through MCP alone.
-2. **The first paid delivery on Robinhood Chain**, through the same gateway and the same delivery-first order.
-3. **Indexed history for v1.** The subgraph manifest gains the v1 factory on Arbitrum One.
-4. **External review** of the 825-SLOC scope in [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md).
+1. **The first paid delivery on Robinhood Chain**, through the same gateway and the same delivery-first order.
+2. **Indexed history for v1.** The subgraph manifest gains the v1 factory on Arbitrum One.
+3. **External review** of the 825-SLOC scope in [`audit/README.md`](https://github.com/0xcuy/adexto/blob/main/audit/README.md).
 
 <details>
 <summary><b>🧩 Contract call traps</b>, for an agent calling the factory directly</summary>
